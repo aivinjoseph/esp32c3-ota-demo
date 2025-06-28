@@ -72,10 +72,8 @@
         if (ret == ESP_OK) {
             ESP_LOGI(TAG, "OTA successful, restarting...");
             esp_restart();
-        } else if (ret == ESP_ERR_OTA_UPGRADE_DONE) {
-            ESP_LOGI(TAG, "No new firmware.");
         } else {
-            ESP_LOGE(TAG, "OTA failed: %s", esp_err_to_name(ret));
+            ESP_LOGE(TAG, "OTA failed or no update: %s", esp_err_to_name(ret));
         }
     }
 
