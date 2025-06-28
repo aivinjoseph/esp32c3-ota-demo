@@ -1,0 +1,49 @@
+name: ESP32-Build
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  IDF_VERSION: v5.3.1
+  TARGET: esp32c3
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: espressif/esp-idf-ci-action@v1
+        with:
+          path: .
+          target: ${{ env.TARGET }}
+          esp_idf_version: ${{ env.IDF_VERSION }}
+
+      - name: Rename app image to firmware.bin
+        run: |
+          cp build/ota_demo.bin firmware.bin
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: firmware
+          path: |
+            firmware.bin
+            build/bootloader/bootloader.bin
+            build/partition_table/partition-table.bin
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { name: firmware }
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            firmware.bin
+      - name: Print OTA URL
+        run: echo "Firmware published at https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/firmware.bin"
